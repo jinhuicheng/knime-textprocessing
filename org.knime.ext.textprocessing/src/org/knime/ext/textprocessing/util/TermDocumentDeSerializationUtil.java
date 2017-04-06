@@ -333,7 +333,7 @@ public final class TermDocumentDeSerializationUtil {
         boolean isXml = false;
         int bufferSize = 1024;
         if (input.markSupported()) {
-            input.mark(1024);
+            input.mark(bufferSize);
             byte[] buffer = new byte[bufferSize];
             input.read(buffer);
             String start = new String(buffer);
