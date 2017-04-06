@@ -48,7 +48,6 @@
 package org.knime.ext.textprocessing.util;
 
 import java.io.BufferedInputStream;
-import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.DataInput;
 import java.io.DataInputStream;
@@ -56,7 +55,6 @@ import java.io.DataOutput;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
@@ -310,10 +308,8 @@ public final class TermDocumentDeSerializationUtil {
         int bufferSize = 1024;
         if (input.markSupported()) {
             input.mark(bufferSize);
-            BufferedReader reader = new BufferedReader(
-                    new InputStreamReader(input));
-            char[] buffer = new char[bufferSize];
-            reader.read(buffer);
+            byte[] buffer = new byte[bufferSize];
+            input.read(buffer);
             String start = new String(buffer);
             if (start.contains(TAG_SECTION)) {
                 isDeprecated = true;
@@ -337,11 +333,9 @@ public final class TermDocumentDeSerializationUtil {
         boolean isXml = false;
         int bufferSize = 1024;
         if (input.markSupported()) {
-            input.mark(bufferSize);
-            BufferedReader reader = new BufferedReader(
-                    new InputStreamReader(input));
-            char[] buffer = new char[bufferSize];
-            reader.read(buffer);
+            input.mark(1024);
+            byte[] buffer = new byte[bufferSize];
+            input.read(buffer);
             String start = new String(buffer);
             // <?xml version="1.0" encoding="UTF-8"?>
             if (start.contains("<?xml version=")) {
