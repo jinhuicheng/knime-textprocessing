@@ -256,7 +256,7 @@ public class TikaParser {
                     ex.setContext(m_context);
                     ex.setDuplicateFilesList(m_duplicates);
                     ex.setExtractInlineImages(m_extractInlineImages);
-                    ex.extract(stream, attachmentDir.toPath(), url.getFile()); //getName
+                    ex.extract(stream, attachmentDir.toPath(), FilenameUtils.getName(url.getPath())); //getName
                     if (ex.hasError()) {
                         m_errorMsg = "Could not write embedded files to the output directory";
                         LOGGER.error(m_errorMsg + ": " + url.getPath());
