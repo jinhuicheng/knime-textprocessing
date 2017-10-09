@@ -90,6 +90,11 @@ import org.knime.ext.textprocessing.util.DataTableSpecVerifier;
 public final class MetaInfoExtractionNodeModel extends NodeModel {
 
     /**
+     * Default setting for document column name.
+     */
+    public static final String DEF_DOCCOL = "";
+
+    /**
      * Default setting for appending documents.
      */
     public static final boolean DEF_APPENDDOCS = true;
@@ -125,13 +130,39 @@ public final class MetaInfoExtractionNodeModel extends NodeModel {
 
     @Override
     protected DataTableSpec[] configure(final DataTableSpec[] inSpecs) throws InvalidSettingsException {
-        DataTableSpec spec = inSpecs[0];
+        checkDataTableSpec(inSpecs[0]);
+        return new DataTableSpec[]{createDataTableSpec()};
+    }
 
+    private final void checkDataTableSpec(final DataTableSpec spec) throws InvalidSettingsException {
         // check input spec
         DataTableSpecVerifier verifier = new DataTableSpecVerifier(spec);
         verifier.verifyMinimumDocumentCells(1, true);
+        int numOfDocumentCols = verifier.getNumDocumentCells();
 
-        return new DataTableSpec[]{createDataTableSpec()};
+        // the node should fail when no column has been selected yet (AP-7489)
+        String docCol = m_docColModel.getStringValue();
+        if (docCol.isEmpty()) {
+            String documentCol = null;
+            if (numOfDocumentCols == 1) {
+                documentCol = spec.getColumnSpec(verifier.getDocumentCellIndex()).getName();
+            } else if (numOfDocumentCols > 1) {
+                for (String colName : spec.getColumnNames()) {
+                    if (spec.getColumnSpec(colName).getType().isCompatible(DocumentValue.class)) {
+                        documentCol = colName;
+                        break;
+                    }
+                }
+                setWarningMessage("Auto guessing: Using column '" + documentCol + "' as document column");
+            }
+            m_docColModel.setStringValue(documentCol);
+            docCol = documentCol;
+        }
+
+        if (spec.findColumnIndex(docCol) < 0) {
+            throw new InvalidSettingsException(
+                "Selected document column \"" + docCol + "\" could not be found in the input data table.");
+        }
     }
 
     private DataTableSpec createDataTableSpec() {
@@ -154,7 +185,8 @@ public final class MetaInfoExtractionNodeModel extends NodeModel {
     @Override
     protected BufferedDataTable[] execute(final BufferedDataTable[] inData, final ExecutionContext exec)
         throws Exception {
-
+        DataTableSpec spec = inData[0].getDataTableSpec();
+        checkDataTableSpec(spec);
         boolean distinctDocs = m_distinctDocsModel.getBooleanValue();
         boolean keysOnly = m_metaKeysOnlyModel.getBooleanValue();
         String keys = m_metaKeysModel.getStringValue();
@@ -165,7 +197,7 @@ public final class MetaInfoExtractionNodeModel extends NodeModel {
             }
         }
 
-        int docColIndx = inData[0].getDataTableSpec().findColumnIndex(m_docColModel.getStringValue());
+        int docColIndx = spec.findColumnIndex(m_docColModel.getStringValue());
 
         final BufferedDataContainer bdc = exec.createDataContainer(createDataTableSpec());
         final Set<UUID> processedDocs = new HashSet<UUID>();
@@ -242,7 +274,7 @@ public final class MetaInfoExtractionNodeModel extends NodeModel {
         m_distinctDocsModel.loadSettingsFrom(settings);
         m_metaKeysModel.loadSettingsFrom(settings);
         m_metaKeysOnlyModel.loadSettingsFrom(settings);
-        m_docColModel.validateSettings(settings);
+        m_docColModel.loadSettingsFrom(settings);
     }
 
     private void enableDialogs() {
