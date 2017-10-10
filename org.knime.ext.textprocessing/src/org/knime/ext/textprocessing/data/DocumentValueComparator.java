@@ -76,6 +76,12 @@ public class DocumentValueComparator extends DataValueComparator {
             return 0;
         }
 
+        // temporary fix
+        // TODO: what does identical documents mean? same content or same ID?
+        if (((DocumentValue)v1).getDocument().getUUID() != ((DocumentValue)v2).getDocument().getUUID()) {
+            return -1;
+        }
+
         // compare title
         String str1 = ((DocumentValue)v1).getDocument().getTitle();
         String str2 = ((DocumentValue)v2).getDocument().getTitle();
