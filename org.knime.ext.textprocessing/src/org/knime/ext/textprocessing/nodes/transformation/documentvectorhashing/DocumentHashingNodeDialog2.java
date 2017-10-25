@@ -76,7 +76,7 @@ public class DocumentHashingNodeDialog2 extends DefaultNodeSettingsPane {
      */
     static final SettingsModelString getDocumentColModel() {
         return new SettingsModelString(DocumentHashingConfigKeys.CFGKEY_DOC_COL,
-            AbstractDocumentHashingNodeModel.DEFAULT_DOCUMENT_COLNAME);
+            "");
     }
 
     /**
@@ -104,7 +104,7 @@ public class DocumentHashingNodeDialog2 extends DefaultNodeSettingsPane {
      * @return the vector value type
      */
     static SettingsModelString getVectorValueModel() {
-        return new SettingsModelString(DocumentHashingConfigKeys.CFGKEY_VEC_VAL, "binary");
+        return new SettingsModelString(DocumentHashingConfigKeys.CFGKEY_VEC_VAL, "Binary");
     }
 
     /**

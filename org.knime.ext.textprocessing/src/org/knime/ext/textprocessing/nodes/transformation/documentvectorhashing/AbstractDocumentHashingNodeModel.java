@@ -30,7 +30,6 @@ import org.knime.ext.textprocessing.data.Paragraph;
 import org.knime.ext.textprocessing.data.Section;
 import org.knime.ext.textprocessing.data.Sentence;
 import org.knime.ext.textprocessing.data.Term;
-import org.knime.ext.textprocessing.util.CommonColumnNames;
 import org.knime.ext.textprocessing.util.DataTableSpecVerifier;
 import org.knime.ext.textprocessing.util.DocumentDataTableBuilder;
 
@@ -42,11 +41,6 @@ import org.knime.ext.textprocessing.util.DocumentDataTableBuilder;
  * @since 3.4
  */
 public abstract class AbstractDocumentHashingNodeModel extends NodeModel {
-
-    /**
-     * The default document column to use.
-     */
-    public static final String DEFAULT_DOCUMENT_COLNAME = CommonColumnNames.DEF_ORIG_DOCUMENT_COLNAME;
 
     /**
      * The default value to the as collection flag.
@@ -101,11 +95,30 @@ public abstract class AbstractDocumentHashingNodeModel extends NodeModel {
     protected ColumnRearranger createColumnRearranger(final DataTableSpec spec) throws InvalidSettingsException {
         final DataTableSpecVerifier verifier = new DataTableSpecVerifier(spec);
         verifier.verifyMinimumDocumentCells(1, true);
+        int numOfDocCols = verifier.getNumDocumentCells();
 
-        int documentColIndex = spec.findColumnIndex(m_docCol.getStringValue());
-        if (documentColIndex < 0) {
+        // the node should only auto-guess column at the beginning (AP-7489)
+        String docCol = m_docCol.getStringValue();
+        if (docCol.isEmpty()) {
+            String newDocCol = null;
+            if (numOfDocCols == 1) {
+                newDocCol = spec.getColumnSpec(verifier.getDocumentCellIndex()).getName();
+            } else if (numOfDocCols > 1) {
+                for (String colName : spec.getColumnNames()) {
+                    if (spec.getColumnSpec(colName).getType().isCompatible(DocumentValue.class)) {
+                        newDocCol = colName;
+                        break;
+                    }
+                }
+                setWarningMessage("Auto guessing: Using column '" + newDocCol + "' as document column");
+            }
+            m_docCol.setStringValue(newDocCol);
+            docCol = newDocCol;
+        }
+
+        if (spec.findColumnIndex(docCol) < 0) {
             throw new InvalidSettingsException(
-                "Index of specified document column is not valid! " + "Check your settings!");
+                "Selected document column \"" + docCol + "\" could not be found in the input data table.");
         }
 
         final ColumnRearranger rearranger = new ColumnRearranger(spec);

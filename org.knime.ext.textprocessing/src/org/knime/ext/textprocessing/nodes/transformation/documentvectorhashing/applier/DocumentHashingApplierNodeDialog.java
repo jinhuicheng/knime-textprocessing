@@ -70,7 +70,7 @@ public class DocumentHashingApplierNodeDialog extends DefaultNodeSettingsPane {
      */
     static final SettingsModelString getDocumentColModel() {
         return new SettingsModelString(DocumentHashingConfigKeys.CFGKEY_DOC_COL,
-            AbstractDocumentHashingNodeModel.DEFAULT_DOCUMENT_COLNAME);
+            "");
     }
 
     /**
