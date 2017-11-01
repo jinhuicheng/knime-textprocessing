@@ -79,6 +79,7 @@ import org.knime.ext.textprocessing.data.Document;
 import org.knime.ext.textprocessing.data.DocumentCell;
 import org.knime.ext.textprocessing.data.DocumentMetaInfo;
 import org.knime.ext.textprocessing.data.DocumentValue;
+import org.knime.ext.textprocessing.util.ColumnSelectionVerifier;
 import org.knime.ext.textprocessing.util.CommonColumnNames;
 import org.knime.ext.textprocessing.util.DataTableSpecVerifier;
 
@@ -138,31 +139,13 @@ public final class MetaInfoExtractionNodeModel extends NodeModel {
         // check input spec
         DataTableSpecVerifier verifier = new DataTableSpecVerifier(spec);
         verifier.verifyMinimumDocumentCells(1, true);
-        int numOfDocumentCols = verifier.getNumDocumentCells();
 
-        // the node should fail when no column has been selected yet (AP-7489)
-        String docCol = m_docColModel.getStringValue();
-        if (docCol.isEmpty()) {
-            String documentCol = null;
-            if (numOfDocumentCols == 1) {
-                documentCol = spec.getColumnSpec(verifier.getDocumentCellIndex()).getName();
-            } else if (numOfDocumentCols > 1) {
-                for (String colName : spec.getColumnNames()) {
-                    if (spec.getColumnSpec(colName).getType().isCompatible(DocumentValue.class)) {
-                        documentCol = colName;
-                        break;
-                    }
-                }
-                setWarningMessage("Auto guessing: Using column '" + documentCol + "' as document column");
-            }
-            m_docColModel.setStringValue(documentCol);
-            docCol = documentCol;
+        // use ColumnSelectionVerifier to check column validity (AP-7489)
+        ColumnSelectionVerifier docVerifier = new ColumnSelectionVerifier(m_docColModel, spec, DocumentValue.class);
+        if (docVerifier.hasWarningMessage()) {
+            setWarningMessage(docVerifier.getWarningMessage());
         }
 
-        if (spec.findColumnIndex(docCol) < 0) {
-            throw new InvalidSettingsException(
-                "Selected document column \"" + docCol + "\" could not be found in the input data table.");
-        }
     }
 
     private DataTableSpec createDataTableSpec() {
