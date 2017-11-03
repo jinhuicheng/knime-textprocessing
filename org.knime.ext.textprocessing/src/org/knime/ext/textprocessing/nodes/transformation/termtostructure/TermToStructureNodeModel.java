@@ -152,6 +152,11 @@ public class TermToStructureNodeModel extends NodeModel {
 
         BufferedDataTable inDataTable = inData[INDATA_INDEX];
 
+        String formatType = m_formatTypeModel.getStringValue();
+        if (formatType.equals("INCHI")) {
+            formatType = "STD_INCHI";
+        }
+
         // find index of term column
         m_termColIndex = inDataTable.getDataTableSpec().findColumnIndex(
                 m_termColModel.getStringValue());
